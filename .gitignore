@@ -1,0 +1,5 @@
+**/__pycache__
+**/.env
+**/.vscode
+**/.DS_Store
+**/plaid_codes.json
