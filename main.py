@@ -1,26 +1,26 @@
 import base64
-from plaid_helpers import (
-    get_transactions,
-)
+from plaid_helpers import get_transactions
 from coda import (
     add_transactions as add_transactions_to_coda,
-    get_last_transaction_date_for_bank
+    get_last_transaction_date_for_bank,
 )
-from store import (Store)
+from store import Store
 import datetime
 import json
 import time
 from flask import Flask
 from flask import request
+import sys
 
 app = Flask(__name__)
-store = Store('plaid_codes.json')
+store = Store("plaid_codes.json")
 
 
 def add_bank_transactions(
     bank,
-    start_date="{:%Y-%m-%d}".format(datetime.datetime.now() +
-                                    datetime.timedelta(days=-30)),
+    start_date="{:%Y-%m-%d}".format(
+        datetime.datetime.now() + datetime.timedelta(days=-30)
+    ),
     end_date="{:%Y-%m-%d}".format(datetime.datetime.now()),
 ):
     transactions = get_transactions(store, bank, start_date, end_date)
@@ -42,3 +42,13 @@ def add_bank_transactions_handler():
     if bank is None:
         return "Bank not provided!", 400
     return add_bank_transactions(bank, start_date, end_date)
+
+
+if __name__ == "__main__":
+    # TODO: grab bank info from command line to update transactions for
+    [_, *banks] = sys.argv
+    for bank in banks:
+        if bank not in store.get_banks():
+            print(f"ERROR 🚨: bank {bank} not found in list of banks")
+            continue
+        update_bank_transactions(bank)

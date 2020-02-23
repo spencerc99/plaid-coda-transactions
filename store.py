@@ -25,3 +25,6 @@ class Store:
 
     def get_access_code_from_name(self, item_name: str) -> str:
         return self.data[item_name].access_code
+
+    def get_banks(self):
+        return set(self.data.keys())
