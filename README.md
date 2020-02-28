@@ -1,29 +1,10 @@
-### plaid-python quickstart
+# Setup
+## Plaid
+1. registering for plaid account
+   1. get the necessary tokens and stuff
+2. requesting more accounts if necessary
 
-[Quickstart guide](https://plaid.com/docs/quickstart)
-
-``` bash
-git clone https://github.com/plaid/quickstart.git
-cd quickstart/python
-
-# If you use virtualenv
-# virtualenv venv
-# source venv/bin/activate
-
-pip install -r requirements.txt
-
-# Start the Quickstart with your API keys from the Dashboard
-# https://dashboard.plaid.com/account/keys
-#
-# PLAID_PRODUCTS is a comma-separated list of products to use when initializing
-# Link. Note that this list must contain 'assets' in order for the app to be
-# able to create and retrieve asset reports.
-PLAID_CLIENT_ID='CLIENT_ID' \
-PLAID_SECRET='SECRET' \
-PLAID_PUBLIC_KEY='PUBLIC_KEY' \
-PLAID_ENV='sandbox' \
-PLAID_PRODUCTS='transactions' \
-PLAID_COUNTRY_CODES='US,CA,GB,FR,ES' \
-python server.py
-# Go to http://localhost:5000
-```
+## Coda
+1. registering for coda account
+2. get api key
+3. get relevant column/table id
