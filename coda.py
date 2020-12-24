@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path="./.env")
 doc_id = "4_uKg6jYtC"
-base_uri = "https://coda.io/apis/v1beta1"
+base_uri = "https://coda.io/apis/v1"
 # SETUP: grab table data
 headers = {"Authorization": f'Bearer {os.getenv("CODA_API_KEY")}'}
 

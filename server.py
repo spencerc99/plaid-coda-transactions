@@ -1,3 +1,9 @@
+"""
+To run this:
+(conda activate plaid-budgeting) first
+1. export FLASK_APP="server.py"
+2. flask run
+"""
 from dotenv import load_dotenv
 import base64
 import os
