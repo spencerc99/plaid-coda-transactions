@@ -42,16 +42,19 @@ def format_error(e):
     }
 
 
-def get_transactions(store, item, start_date, end_date):
+def get_transactions(store, item, start_date, end_date, last_transaction_id):
     """
     date must be formatted as follows: '{:%Y-%m-%d}'.format(datetime.datetime.now())
     """
-    print(
-        f'Getting transactions for {item} between {start_date} and {end_date}')
+    print(f"Getting transactions for {item} between {start_date} and {end_date}")
     access_token = store.get_bank(item).access_code
     try:
-        transactions_resp = client.Transactions.get(
-            access_token, start_date, end_date)
-        return transactions_resp
+        transactions_resp = client.Transactions.get(access_token, start_date, end_date)
+        if "transactions" not in transactions_resp:
+            raise Exception(
+                f"No transactions found or errored out. resp: {transactions_resp}"
+            )
+
+        return transactions_resp["transactions"]
     except plaid.errors.PlaidError as e:
         return format_error(e)

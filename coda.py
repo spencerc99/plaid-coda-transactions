@@ -4,20 +4,24 @@ import datetime
 from dotenv import load_dotenv
 
 load_dotenv(dotenv_path="./.env")
-doc_id = "4_uKg6jYtC"
+# TODO: command line utility to prompt for these things and setup in `.env`
+### CONSTANTS
+doc_id = os.getenv("CODA_DOC_ID")  # something like "4aBCsjYtC"
 base_uri = "https://coda.io/apis/v1"
-# SETUP: grab table data
 headers = {"Authorization": f'Bearer {os.getenv("CODA_API_KEY")}'}
+transaction_table_id = os.getenv("CODA_TRANSACTIONS_TABLE_ID")
+source_column_id = os.getenv("CODA_TRANSACTIONS_TABLE_SOURCE_COL_ID")
+last_transaction_date_col_id = os.getenv("CODA_LAST_TRANSACTION_DATE_COL_ID")
+last_transaction_id_col_id = os.getenv("CODA_LAST_TRANSACTION_ID_COL_ID")
+bank_table_id = os.getenv("CODA_BANK_TABLE_ID")
 
-transaction_table_id = "grid-C2XUv0rWdc"
-
+# TODO: grab this automatically
 key_to_column_id = {
     "amount": "c-yUu7YUw06j",
     "category": "c-XpUwNIUJpv",
     "name": "c-IZHxZWF-1A",
     "date": "c-zVCv3YQB7I",
     "transaction_id": "c-Bxu6HBEvtR",
-    # "transaction_type": "c-rZaY8n9ttI",
     "city": "c-oJHUt-5ZE2",
     "country": "c-5ML0PHB1ML",
 }
@@ -33,21 +37,14 @@ coda_column_to_plaid_mapper = {
     "name": lambda transaction: transaction["name"],
     "date": lambda transaction: transaction["date"],
     "transaction_id": lambda transaction: transaction["transaction_id"],
-    # "transaction_type": lambda transaction: transaction['name'],
     "city": lambda transaction: transaction["location"]["city"],
     "country": lambda transaction: transaction["location"]["country"],
 }
 
-source_column_id = "c-oP1ZL3vd46"
-
-# helpers for a bank
-
-
-def format_transactions_into_rows(bank, transaction_resp):
+### HELPERS FOR A BANK
+def format_transactions_into_rows(bank, transactions):
     rows = []
-    if "transactions" not in transaction_resp:
-        print(f"No transactions found or errored out. resp: {transaction_resp}")
-    for transaction in transaction_resp["transactions"]:
+    for transaction in transactions:
         row = [{"column": source_column_id, "value": bank}]
         for k, col_id in key_to_column_id.items():
             col = {}
@@ -58,8 +55,11 @@ def format_transactions_into_rows(bank, transaction_resp):
     return {"rows": rows}
 
 
-def add_transactions(bank, payload):
-    json_rows = format_transactions_into_rows(bank, payload)
+def add_transactions(bank, transactions):
+    if not len(transactions):
+        print(f"No new transactions for bank {bank}")
+        return
+    json_rows = format_transactions_into_rows(bank, transactions)
     print(f"Adding {len(json_rows['rows'])} transactions for bank {bank}")
     req = requests.post(
         f"{base_uri}/docs/{doc_id}/tables/{transaction_table_id}/rows",
@@ -68,10 +68,6 @@ def add_transactions(bank, payload):
     )
     print(req.text)
     req.raise_for_status()
-
-
-last_transaction_date_col_id = "c-g8XDK5eQPp"
-bank_table_id = "grid-KViIDD_wdd"
 
 
 def get_last_transaction_date_for_bank(bank):
@@ -86,5 +82,6 @@ def get_last_transaction_date_for_bank(bank):
     req.raise_for_status()
     resp = req.json()
     datetime = resp["values"][last_transaction_date_col_id]
+    last_transaction_id = resp["values"][last_transaction_id_col_id]
     date = datetime.split("T")[0]
-    return date
+    return date, last_transaction_id

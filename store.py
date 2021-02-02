@@ -3,10 +3,9 @@ from typing import Dict
 
 
 class Bank:
-    def __init__(self, item_id, access_code, row_id) -> None:
+    def __init__(self, item_id, access_code) -> None:
         self.item_id = item_id
         self.access_code = access_code
-        self.row_id = row_id
 
 
 class Store:
@@ -17,8 +16,8 @@ class Store:
             raw_data = json.load(f)
         self.data = {}
         for item, props in raw_data.items():
-            item_id, access_code, row_id = props.values()
-            self.data[item] = Bank(item_id, access_code, row_id)
+            item_id, access_code = props.values()
+            self.data[item] = Bank(item_id, access_code)
 
     def get_bank(self, item) -> Bank:
         return self.data[item]
