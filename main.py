@@ -29,14 +29,12 @@ def add_bank_transactions(
         store, bank, start_date, end_date, last_transaction_id
     )
     # ignore pending transactions
-    transactions = [
-        transaction for transaction in transactions if not transaction.pending
-    ]
+    transactions = sorted(
+        [transaction for transaction in transactions if not transaction["pending"]],
+        key=lambda t: datetime.datetime.strptime(t["date"], "%Y-%m-%d"),
+    )
     # grab everything past the last known transaction since plaid only does date filtering at the day level.
     if last_transaction_id:
-        from pdb import set_trace
-
-        set_trace()
         last_transaction_id_idx = [
             i
             for i, transaction in enumerate(transactions)
@@ -62,6 +60,7 @@ def add_bank_transactions_handler():
     if bank is None:
         return "Bank not provided!", 400
     return add_bank_transactions(bank, start_date, end_date)
+
 
 # TODO: change to use click
 if __name__ == "__main__":
