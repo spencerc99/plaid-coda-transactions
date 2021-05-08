@@ -3,3 +3,5 @@
 **/.vscode
 **/.DS_Store
 **/plaid_codes.json
+user_info.json
+TODO.md

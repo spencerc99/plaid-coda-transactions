@@ -1,4 +1,5 @@
 import base64
+import traceback
 from plaid_helpers import get_transactions
 from coda import (
     add_transactions as add_transactions_to_coda,
@@ -28,6 +29,10 @@ def add_bank_transactions(
     transactions = get_transactions(
         store, bank, start_date, end_date, last_transaction_id
     )
+    if type(transactions) != list and transactions["error"]:
+        # error occurred
+        raise Exception(transactions["error"])
+
     # ignore pending transactions
     transactions = sorted(
         [transaction for transaction in transactions if not transaction["pending"]],
@@ -35,11 +40,16 @@ def add_bank_transactions(
     )
     # grab everything past the last known transaction since plaid only does date filtering at the day level.
     if last_transaction_id:
-        last_transaction_id_idx = [
-            i
-            for i, transaction in enumerate(transactions)
-            if transaction["transaction_id"] == last_transaction_id
-        ][0]
+        last_transaction_id_idx = next(
+            iter(
+                [
+                    i
+                    for i, transaction in enumerate(transactions)
+                    if transaction["transaction_id"] == last_transaction_id
+                ]
+            ),
+            None,
+        )
         if last_transaction_id_idx:
             transactions = transactions[last_transaction_id_idx + 1 :]
     return add_transactions_to_coda(bank, transactions)
@@ -76,4 +86,7 @@ if __name__ == "__main__":
                 continue
             update_bank_transactions(bank)
         except Exception as e:
-            print(f"Failed to process transactions for {bank}: {e.with_traceback()}")
+            print(
+                f"Failed to process transactions for {bank}: {''.join(traceback.TracebackException.from_exception(e).format())}"
+            )
+
