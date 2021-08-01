@@ -1,6 +1,9 @@
+from typing import List
+from local_types import Transaction
 import plaid
 from dotenv import load_dotenv
 import os
+import datetime
 
 load_dotenv(dotenv_path="./.env")
 
@@ -42,11 +45,14 @@ def format_error(e):
     }
 
 
-def get_transactions(store, item, start_date, end_date, last_transaction_id):
+def get_transactions(
+    store, item, start_date, end_date, last_transaction_id
+) -> List[Transaction]:
     """
     date must be formatted as follows: '{:%Y-%m-%d}'.format(datetime.datetime.now())
     """
     print(f"Getting transactions for {item} between {start_date} and {end_date}")
+
     access_token = store.get_bank(item).access_code
     try:
         transactions_resp = client.Transactions.get(access_token, start_date, end_date)
@@ -55,6 +61,43 @@ def get_transactions(store, item, start_date, end_date, last_transaction_id):
                 f"No transactions found or errored out. resp: {transactions_resp}"
             )
 
-        return transactions_resp["transactions"]
+        transactions = transactions_resp["transactions"]
+        if type(transactions) != list and transactions["error"]:
+            # error occurred
+            raise Exception(transactions["error"])
+
+        # ignore pending transactions
+        transactions = sorted(
+            [transaction for transaction in transactions if not transaction["pending"]],
+            key=lambda t: datetime.datetime.strptime(t["date"], "%Y-%m-%d"),
+        )
+        # grab everything past the last known transaction since plaid only does date filtering at the day level.
+        if last_transaction_id:
+            last_transaction_id_idx = next(
+                iter(
+                    [
+                        i
+                        for i, transaction in enumerate(transactions)
+                        if transaction["transaction_id"] == last_transaction_id
+                    ]
+                ),
+                None,
+            )
+            if last_transaction_id_idx:
+                transactions = transactions[last_transaction_id_idx + 1 :]
+
+        return [
+            Transaction(
+                amount=transaction["amount"],
+                category=transaction["category"],
+                name=transaction["name"],
+                date=transaction["date"],
+                transaction_id=transaction["transaction_id"],
+                city=transaction["location"]["city"],
+                country=transaction["location"]["country"],
+            )
+            for transaction in transactions
+        ]
+
     except plaid.errors.PlaidError as e:
-        return format_error(e)
+        print(format_error(e))

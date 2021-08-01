@@ -31,17 +31,11 @@ def format_none(val):
     return "" if val is None else val
 
 
-coda_column_to_plaid_mapper = {
-    "amount": lambda transaction: transaction["amount"],
-    "category": lambda transaction: transaction["category"],
-    "name": lambda transaction: transaction["name"],
-    "date": lambda transaction: transaction["date"],
-    "transaction_id": lambda transaction: transaction["transaction_id"],
-    "city": lambda transaction: transaction["location"]["city"],
-    "country": lambda transaction: transaction["location"]["country"],
-}
-
 ### HELPERS FOR A BANK
+def format_transaction_value_to_coda_column(key, transaction):
+    return getattr(transaction, key)
+
+
 def format_transactions_into_rows(bank, transactions):
     rows = []
     for transaction in transactions:
@@ -49,7 +43,9 @@ def format_transactions_into_rows(bank, transactions):
         for k, col_id in key_to_column_id.items():
             col = {}
             col["column"] = col_id
-            col["value"] = format_none(coda_column_to_plaid_mapper[k](transaction))
+            col["value"] = format_none(
+                format_transaction_value_to_coda_column(k, transaction)
+            )
             row.append(col)
         rows.append({"cells": row})
     return {"rows": rows}
@@ -84,4 +80,5 @@ def get_last_transaction_date_for_bank(bank):
     datetime = resp["values"][last_transaction_date_col_id]
     last_transaction_id = resp["values"][last_transaction_id_col_id]
     date = datetime.split("T")[0]
+    print(f"Last known date on {date} with transaction {last_transaction_id}")
     return date, last_transaction_id

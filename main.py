@@ -9,6 +9,7 @@ from store import Store
 import datetime
 import json
 import time
+import venmo
 from flask import Flask
 from flask import request
 import sys
@@ -26,39 +27,34 @@ def add_bank_transactions(
     end_date="{:%Y-%m-%d}".format(datetime.datetime.now()),
     last_transaction_id=None,
 ):
-    transactions = get_transactions(
-        store, bank, start_date, end_date, last_transaction_id
-    )
-    if type(transactions) != list and transactions["error"]:
-        # error occurred
-        raise Exception(transactions["error"])
-
-    # ignore pending transactions
-    transactions = sorted(
-        [transaction for transaction in transactions if not transaction["pending"]],
-        key=lambda t: datetime.datetime.strptime(t["date"], "%Y-%m-%d"),
-    )
-    # grab everything past the last known transaction since plaid only does date filtering at the day level.
-    if last_transaction_id:
-        last_transaction_id_idx = next(
-            iter(
-                [
-                    i
-                    for i, transaction in enumerate(transactions)
-                    if transaction["transaction_id"] == last_transaction_id
-                ]
-            ),
-            None,
+    # use different method based on bank info, for now just special case venmo
+    if bank == "Venmo":
+        transactions = venmo.get_transactions(
+            last_transaction_id=last_transaction_id,
+            start_transaction_ts=datetime.datetime.strptime(
+                start_date, "%Y-%m-%d"
+            ).timestamp(),
         )
-        if last_transaction_id_idx:
-            transactions = transactions[last_transaction_id_idx + 1 :]
+    else:
+        transactions = get_transactions(
+            store, bank, start_date, end_date, last_transaction_id
+        )
     return add_transactions_to_coda(bank, transactions)
 
 
-def update_bank_transactions(bank):
+def update_bank_transactions(
+    bank,
+    input_start_date="{:%Y-%m-%d}".format(
+        datetime.datetime.now() + datetime.timedelta(days=-30)
+    ),
+    input_end_date="{:%Y-%m-%d}".format(datetime.datetime.now()),
+):
     start_date, last_transaction_id = get_last_transaction_date_for_bank(bank)
     return add_bank_transactions(
-        bank, start_date=start_date, last_transaction_id=last_transaction_id
+        bank,
+        start_date=input_start_date or start_date,
+        last_transaction_id=last_transaction_id,
+        end_date=input_end_date,
     )
 
 
@@ -85,6 +81,9 @@ if __name__ == "__main__":
                 )
                 continue
             update_bank_transactions(bank)
+            # TODO: allow for custom date range
+            # update_bank_transactions(bank, "{:%Y-%m-%d}".format(datetime.datetime(year=2021, month=5, day=18)), "{:%Y-%m-%d}".format(datetime.datetime(year=2021, month=6, day=23)))
+
         except Exception as e:
             print(
                 f"Failed to process transactions for {bank}: {''.join(traceback.TracebackException.from_exception(e).format())}"
