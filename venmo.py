@@ -56,7 +56,9 @@ def transform_transaction_amount_sign(t: VenmoTransaction) -> int:
     return -abs_amount if is_income else abs_amount
 
 
-def get_transactions(last_transaction_id, start_transaction_ts) -> List[Transaction]:
+def get_transactions(
+    last_transaction_id, start_transaction_ts, end_transaction_ts
+) -> List[Transaction]:
     # paginated grab transactions until encountering last transction id or last transaction date inclusive
     if not venmo:
         print("Venmo client not set up! Skipping Venmo transactions.")
@@ -64,16 +66,17 @@ def get_transactions(last_transaction_id, start_transaction_ts) -> List[Transact
     transactions: List[VenmoTransaction] = venmo.user.get_user_transactions(
         user_id=VENMO_USER_ID
     )
-    
+
     transactions_to_add = []
     while transactions:
         for transaction in transactions:
-            if last_transaction_id:
-                if transaction.id == last_transaction_id:
-                    break
-            if start_transaction_ts:
-                if transaction.date_created < start_transaction_ts:
-                    break
+            if end_transaction_ts and transaction.date_created > end_transaction_ts:
+                continue
+            if start_transaction_ts and transaction.date_created < start_transaction_ts:
+                break
+            # TODO: handle ignoring this if user is passing manual date?
+            if last_transaction_id and transaction.id == last_transaction_id:
+                break
             transactions_to_add.append(
                 Transaction(
                     amount=transform_transaction_amount_sign(transaction),

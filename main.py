@@ -34,6 +34,9 @@ def add_bank_transactions(
             start_transaction_ts=datetime.datetime.strptime(
                 start_date, "%Y-%m-%d"
             ).timestamp(),
+            end_transaction_ts=datetime.datetime.strptime(
+                end_date, "%Y-%m-%d"
+            ).timestamp(),
         )
     else:
         transactions = get_transactions(
@@ -82,7 +85,11 @@ if __name__ == "__main__":
                 continue
             update_bank_transactions(bank)
             # TODO: allow for custom date range
-            # update_bank_transactions(bank, "{:%Y-%m-%d}".format(datetime.datetime(year=2021, month=5, day=18)), "{:%Y-%m-%d}".format(datetime.datetime(year=2021, month=6, day=23)))
+            # update_bank_transactions(
+            #     bank,
+            #     "{:%Y-%m-%d}".format(datetime.datetime(year=2021, month=8, day=2)),
+            #     "{:%Y-%m-%d}".format(datetime.datetime(year=2021, month=8, day=30)),
+            # )
 
         except Exception as e:
             print(
