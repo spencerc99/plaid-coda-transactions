@@ -1,3 +1,4 @@
+from enum import Enum
 from local_types import Transaction
 from typing import List
 from venmo_api import Client
@@ -25,11 +26,34 @@ if VENMO_ACCESS_TOKEN:
 VENMO_USER_ID = os.getenv("VENMO_USER_ID")
 
 
+class PaymentType(Enum):
+    Charge = "charge"
+    Pay = "pay"
+
+
 class VenmoTransaction:
     id: int
     date_created: int
     amount: int
     note: str
+    payment_type: PaymentType
+
+
+def transform_transaction_amount_sign(t: VenmoTransaction) -> int:
+    """
+    Returns the appropriate transformed amount (positive or negative) for the given
+    transaction according to the payment type and whether the actor matches me.
+
+    returns negative if it qualifies as income and
+    positive if it qualifies as a payment to match
+    the Plaid scheme of other transactions
+    """
+    abs_amount = abs(t.amount)
+    is_target_same_user = t.target.id == VENMO_USER_ID
+    is_income = (
+        t.payment_type == PaymentType.Charge.value and not is_target_same_user
+    ) or (t.payment_type == PaymentType.Pay.value and is_target_same_user)
+    return -abs_amount if is_income else abs_amount
 
 
 def get_transactions(last_transaction_id, start_transaction_ts) -> List[Transaction]:
@@ -40,6 +64,7 @@ def get_transactions(last_transaction_id, start_transaction_ts) -> List[Transact
     transactions: List[VenmoTransaction] = venmo.user.get_user_transactions(
         user_id=VENMO_USER_ID
     )
+    
     transactions_to_add = []
     while transactions:
         for transaction in transactions:
@@ -51,7 +76,7 @@ def get_transactions(last_transaction_id, start_transaction_ts) -> List[Transact
                     break
             transactions_to_add.append(
                 Transaction(
-                    amount=-transaction.amount,
+                    amount=transform_transaction_amount_sign(transaction),
                     transaction_id=transaction.id,
                     date="{:%Y-%m-%d}".format(
                         datetime.datetime.fromtimestamp(transaction.date_created)
