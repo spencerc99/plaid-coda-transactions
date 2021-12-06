@@ -47,15 +47,16 @@ def add_bank_transactions(
 
 def update_bank_transactions(
     bank,
-    input_start_date="{:%Y-%m-%d}".format(
-        datetime.datetime.now() + datetime.timedelta(days=-30)
-    ),
+    input_start_date=None,
     input_end_date="{:%Y-%m-%d}".format(datetime.datetime.now()),
 ):
     start_date, last_transaction_id = get_last_transaction_date_for_bank(bank)
+    default_start_date = "{:%Y-%m-%d}".format(
+        datetime.datetime.now() + datetime.timedelta(days=-30)
+    )
     return add_bank_transactions(
         bank,
-        start_date=input_start_date or start_date,
+        start_date=input_start_date or start_date or default_start_date,
         last_transaction_id=last_transaction_id,
         end_date=input_end_date,
     )
@@ -84,6 +85,7 @@ if __name__ == "__main__":
                 )
                 continue
             update_bank_transactions(bank)
+            # update_bank_transactions(bank, "2021-11-05", "2021-11-05")
             # TODO: allow for custom date range
             # update_bank_transactions(
             #     bank,
