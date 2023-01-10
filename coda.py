@@ -71,7 +71,10 @@ def get_last_transaction_date_for_bank(bank):
     bank -- can be the name of the bank (brittle) or the rowId associated with it in the
     Coda Doc.
     """
-    print(f"Retrieving last known transaction date for bank {bank}")
+    print(f"""{"*" * 50}
+*{(46 - len(bank)) // 2 * " "} {bank} {(46 - len(bank)) // 2 * " "}*
+{"*" * 50}""")
+    print("Retrieving last known transaction date...")
     req = requests.get(
         f"{base_uri}/docs/{doc_id}/tables/{bank_table_id}/rows/{bank}", headers=headers
     )

@@ -1,4 +1,4 @@
-import base64
+from tqdm import tqdm
 import traceback
 from plaid_helpers import get_transactions
 from coda import (
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     all_banks = store.get_banks()
     [_, *inp_banks] = sys.argv
     banks = inp_banks if len(inp_banks) > 0 else all_banks
-    for bank in banks:
+    for bank in tqdm(banks):
         try:
             if bank not in all_banks:
                 print(
