@@ -1,7 +1,7 @@
 from enum import Enum
 from local_types import Transaction
 from typing import List
-from venmo_api import Client
+from venmo_api import Client, Transaction as VenmoTransactionOfficial
 import os, sys
 import datetime
 
@@ -59,12 +59,12 @@ def transform_transaction_amount_sign(t: VenmoTransaction) -> int:
 def get_transactions(
     last_transaction_id, start_transaction_ts, end_transaction_ts
 ) -> List[Transaction]:
-    # paginated grab transactions until encountering last transction id or last transaction date inclusive
+    # paginated grab transactions until encountering last transaction id or last transaction date inclusive
     if not venmo:
         print("Venmo client not set up! Skipping Venmo transactions.")
         return
-    transactions: List[VenmoTransaction] = venmo.user.get_user_transactions(
-        user_id=VENMO_USER_ID
+    transactions: List[VenmoTransactionOfficial] = venmo.user.get_user_transactions(
+        user_id=VENMO_USER_ID,
     )
 
     transactions_to_add = []
@@ -84,7 +84,7 @@ def get_transactions(
                     date="{:%Y-%m-%d}".format(
                         datetime.datetime.fromtimestamp(transaction.date_created)
                     ),
-                    name=transaction.note,
+                    name=f"{transaction.note} ({transaction.payment_type} from {transaction.actor.display_name})",
                 )
             )
         transactions = transactions.get_next_page()

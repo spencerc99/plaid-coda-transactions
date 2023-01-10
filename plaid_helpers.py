@@ -83,7 +83,7 @@ def get_transactions(
                 ),
                 None,
             )
-            if last_transaction_id_idx:
+            if last_transaction_id_idx is not None:
                 transactions = transactions[last_transaction_id_idx + 1 :]
 
         return [
