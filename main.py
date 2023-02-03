@@ -78,6 +78,7 @@ if __name__ == "__main__":
     [_, *inp_banks] = sys.argv
     banks = inp_banks if len(inp_banks) > 0 else all_banks
     for bank in tqdm(banks):
+        print()
         try:
             if bank not in all_banks:
                 print(
@@ -97,4 +98,4 @@ if __name__ == "__main__":
             print(
                 f"Failed to process transactions for {bank}: {''.join(traceback.TracebackException.from_exception(e).format())}"
             )
-
+    print()
