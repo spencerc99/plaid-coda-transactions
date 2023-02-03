@@ -47,6 +47,12 @@ install all the required dependencies using your favorite python version/package
 pip install -r requirements.txt
 ```
 
+Alternatively, you can use conda like I do to create a new environment and install the dependencies
+
+```
+conda create -n plaid-budgeting --file environment.yml
+```
+
 Now you can run the following to spin up the sample Plaid server
 
 ```
