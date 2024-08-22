@@ -24,7 +24,7 @@ def add_bank_transactions(
     start_date="{:%Y-%m-%d}".format(
         datetime.datetime.now() + datetime.timedelta(days=-30)
     ),
-    end_date="{:%Y-%m-%d}".format(datetime.datetime.now()),
+    end_date=None,
     last_transaction_id=None,
 ):
     # use different method based on bank info, for now just special case venmo
@@ -36,7 +36,7 @@ def add_bank_transactions(
             ).timestamp(),
             end_transaction_ts=datetime.datetime.strptime(
                 end_date, "%Y-%m-%d"
-            ).timestamp(),
+            ).timestamp() if end_date else None,
         )
     else:
         transactions = get_transactions(
@@ -48,7 +48,7 @@ def add_bank_transactions(
 def update_bank_transactions(
     bank,
     input_start_date=None,
-    input_end_date="{:%Y-%m-%d}".format(datetime.datetime.now()),
+    input_end_date=None,
 ):
     start_date, last_transaction_id = get_last_transaction_date_for_bank(bank)
     default_start_date = "{:%Y-%m-%d}".format(

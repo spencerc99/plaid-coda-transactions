@@ -68,14 +68,17 @@ def get_transactions(
     )
 
     transactions_to_add = []
+    should_break = False
     while transactions:
         for transaction in transactions:
+            print(transaction.id,transaction.actor.display_name, transaction.note, transaction.date_created)
             if end_transaction_ts and transaction.date_created > end_transaction_ts:
                 continue
             if start_transaction_ts and transaction.date_created < start_transaction_ts:
+                should_break = True
                 break
-            # TODO: handle ignoring this if user is passing manual date?
             if last_transaction_id and transaction.id == last_transaction_id:
+                should_break = True
                 break
             transactions_to_add.append(
                 Transaction(
@@ -87,6 +90,8 @@ def get_transactions(
                     name=f"{transaction.note} ({transaction.payment_type} from {transaction.actor.display_name})",
                 )
             )
+        if should_break:
+            break
         transactions = transactions.get_next_page()
 
     return transactions_to_add

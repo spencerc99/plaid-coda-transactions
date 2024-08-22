@@ -44,7 +44,8 @@ def format_error(e):
         }
     }
 
-
+# TODO: migrate to `/sync` https://plaid.com/docs/api/products/transactions/#transactionssync
+# should remove duplicates. also need to pull latest quickstart`
 def get_transactions(
     store, item, start_date, end_date, last_transaction_id
 ) -> List[Transaction]:
