@@ -67,7 +67,7 @@ markupsafe==0.23
 mccabe==0.6.1
 plaid-python==3.3.0
 readline==7.0
-requests==2.20.0
+requests==2.32.2
 setuptools==41.0.1
 six==1.12.0
 sqlite==3.29.0
