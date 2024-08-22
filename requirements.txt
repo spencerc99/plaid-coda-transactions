@@ -81,5 +81,5 @@ werkzeug==0.15.5
 wheel==0.33.4
 wrapt==1.11.2
 xz==5.2.4
-zipp==3.6.0
+zipp==3.19.1
 zlib==1.2.11
