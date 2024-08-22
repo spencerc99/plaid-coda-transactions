@@ -39,8 +39,9 @@ def add_bank_transactions(
             ).timestamp() if end_date else None,
         )
     else:
+        # end date input required for plaid
         transactions = get_transactions(
-            store, bank, start_date, end_date, last_transaction_id
+            store, bank, start_date, end_date or datetime.datetime.now().strftime("%Y-%m-%d"), last_transaction_id
         )
     return add_transactions_to_coda(bank, transactions)
 
