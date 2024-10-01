@@ -71,7 +71,6 @@ def get_transactions(
     should_break = False
     while transactions:
         for transaction in transactions:
-            print(transaction.id,transaction.actor.display_name, transaction.note, transaction.date_created)
             if end_transaction_ts and transaction.date_created > end_transaction_ts:
                 continue
             if start_transaction_ts and transaction.date_created < start_transaction_ts:
