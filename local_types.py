@@ -1,16 +1,22 @@
+from dataclasses import dataclass
+from typing import List
+
+@dataclass
 class Transaction:
-    transaction_id: int
-    date: str  # formatted as %Y-%m-%d
-    amount: int  # amount in USD dollars
+    amount: float
+    category: List[str]
     name: str
-    category: str
+    datetime: str  # Full datetime in ISO format (YYYY-MM-DDTHH:mm:ssZ) for proper ordering
+    date: str  # Keep for backward compatibility (YYYY-MM-DD)
+    transaction_id: str
     city: str
     country: str
 
     def __init__(
-        self, transaction_id, date, amount, name, category=None, city=None, country=None
+        self, transaction_id, amount, name, datetime=None, date=None, category=None, city=None, country=None
     ):
         self.transaction_id = transaction_id
+        self.datetime = datetime
         self.date = date
         self.amount = amount
         self.name = name

@@ -51,29 +51,72 @@ def get_transactions(
 ) -> List[Transaction]:
     """
     date must be formatted as follows: '{:%Y-%m-%d}'.format(datetime.datetime.now())
+    
+    Fixed to handle pagination properly and use datetime for proper transaction ordering.
+    This was causing missing transactions when fetching large date ranges (over a month).
     """
     print(f"Getting transactions for {item} between {start_date} and {end_date}")
+    if last_transaction_id:
+        print(f"Will filter transactions after last known ID: {last_transaction_id}")
 
     access_token = store.get_bank(item).access_code
+    all_transactions = []
+    offset = 0
+    batch_size = 500  # Maximum allowed by Plaid
+    
     try:
-        transactions_resp = client.Transactions.get(access_token, start_date, end_date)
-        if "transactions" not in transactions_resp:
-            raise Exception(
-                f"No transactions found or errored out. resp: {transactions_resp}"
+        while True:
+            print(f"Fetching batch {offset//batch_size + 1} (offset: {offset})")
+            
+            transactions_resp = client.Transactions.get(
+                access_token, 
+                start_date, 
+                end_date,
+                offset=offset,
+                count=batch_size
             )
+            
+            if "transactions" not in transactions_resp:
+                raise Exception(
+                    f"No transactions found or errored out. resp: {transactions_resp}"
+                )
 
-        transactions = transactions_resp["transactions"]
-        if type(transactions) != list and transactions["error"]:
-            # error occurred
-            raise Exception(transactions["error"])
+            transactions = transactions_resp["transactions"]
+            if type(transactions) != list and transactions["error"]:
+                # error occurred
+                raise Exception(transactions["error"])
+
+            # If no transactions returned, we've fetched all available
+            if not transactions:
+                break
+                
+            all_transactions.extend(transactions)
+            
+            # Check if we've fetched all transactions
+            total_transactions = transactions_resp.get("total_transactions", 0)
+            if len(all_transactions) >= total_transactions:
+                break
+                
+            offset += batch_size
+            
+        print(f"Retrieved {len(all_transactions)} total transactions from Plaid")
 
         # ignore pending transactions
         transactions = sorted(
-            [transaction for transaction in transactions if not transaction["pending"]],
-            key=lambda t: datetime.datetime.strptime(t["date"], "%Y-%m-%d"),
+            [transaction for transaction in all_transactions if not transaction["pending"]],
+            # Sort by datetime if available, otherwise by date
+            key=lambda t: (
+                t.get("datetime") or 
+                t.get("authorized_datetime") or 
+                (t["date"] + "T12:00:00Z")
+            )
         )
+        
+        print(f"After filtering pending: {len(transactions)} transactions")
+        
         # grab everything past the last known transaction since plaid only does date filtering at the day level.
         if last_transaction_id:
+            print(f"Filtering transactions after last known ID: {last_transaction_id}")
             last_transaction_id_idx = next(
                 iter(
                     [
@@ -86,13 +129,24 @@ def get_transactions(
             )
             if last_transaction_id_idx is not None:
                 transactions = transactions[last_transaction_id_idx + 1 :]
+                print(f"After filtering by last transaction ID: {len(transactions)} transactions")
+            else:
+                print(f"Warning: Last transaction ID {last_transaction_id} not found in results")
+
+        print(f"Final transaction count to process: {len(transactions)}")
 
         return [
             Transaction(
                 amount=transaction["amount"],
                 category=transaction["category"],
                 name=transaction["name"],
-                date=transaction["date"],
+                # Ensure we always have a datetime value - prefer datetime field, fallback to date + time
+                datetime=(
+                    transaction.get("datetime") or 
+                    transaction.get("authorized_datetime") or 
+                    (transaction["date"] + "T12:00:00Z")
+                ),
+                date=transaction["date"],  # date should always be present
                 transaction_id=transaction["transaction_id"],
                 city=transaction["location"]["city"],
                 country=transaction["location"]["country"],
@@ -101,4 +155,8 @@ def get_transactions(
         ]
 
     except plaid.errors.PlaidError as e:
-        print(format_error(e))
+        print(f"Plaid API Error: {format_error(e)}")
+        raise
+    except Exception as e:
+        print(f"General Error in get_transactions: {str(e)}")
+        raise

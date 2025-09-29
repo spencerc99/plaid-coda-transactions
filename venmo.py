@@ -83,7 +83,7 @@ def get_transactions(
                 Transaction(
                     amount=transform_transaction_amount_sign(transaction),
                     transaction_id=transaction.id,
-                    date="{:%Y-%m-%d}".format(
+                    datetime="{:%Y-%m-%d}".format(
                         datetime.datetime.fromtimestamp(transaction.date_created)
                     ),
                     name=f"{transaction.note} ({transaction.payment_type} from {transaction.actor.display_name})",

@@ -51,7 +51,14 @@ def update_bank_transactions(
     input_start_date=None,
     input_end_date=None,
 ):
-    start_date, last_transaction_id = get_last_transaction_date_for_bank(bank)
+    last_datetime, last_transaction_id = get_last_transaction_date_for_bank(bank)
+    
+    # Extract date part from datetime for Plaid API (which expects YYYY-MM-DD format)
+    if last_datetime:
+        start_date = last_datetime.split("T")[0] if "T" in last_datetime else last_datetime
+    else:
+        start_date = None
+        
     default_start_date = "{:%Y-%m-%d}".format(
         datetime.datetime.now() + datetime.timedelta(days=-30)
     )
