@@ -68,7 +68,7 @@ mccabe==0.6.1
 plaid-python==3.3.0
 readline==7.0
 requests==2.20.0
-setuptools==41.0.1
+setuptools==70.0.0
 six==1.12.0
 sqlite==3.29.0
 tk==8.6.8
